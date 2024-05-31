@@ -71,4 +71,10 @@ app.post("/custom_needs", async (req, res) => {
   }
 });
 
+app.get("/project", (req, res) => {
+  res.render("pages/project.njk");
+});
+
+app.post("/project", async (req, res) => {});
+
 module.exports = app;
