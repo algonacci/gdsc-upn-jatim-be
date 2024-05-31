@@ -30,13 +30,8 @@
     {% if response %}
     <div class="mt-3">
         <h2>
-            <strong>
-                Gemini Response:
-            </strong>
+            Gemini Response: {{ inputPrompt }}
         </h2>
-        <p>
-            {{ inputPrompt }}
-        </p>
         <p id="generatedText">{{ response }}</p>
     </div>
 

@@ -1,0 +1,88 @@
+{% extends "layouts/masterLayout.njk" %}
+
+{% block content %}
+
+<div class="container my-5">
+    <div class="card">
+        <div class="card-header text-center">
+            <p>
+                <strong>
+                    Streaming Request
+                </strong>
+            </p>
+        </div>
+        <div class="card-body">
+            <div>
+                <div class="form-group">
+                    <label for="prompt" class="text-gray-700 text-sm font-bold mb-2">Enter your prompt</label>
+                    <textarea id="prompt"
+                        class="form-control appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        rows="5" cols="70" placeholder="Type your prompt here" required></textarea>
+                </div>
+                <div class="text-center mt-3">
+                    <button type="submit" id="generateButton"
+                        class="btn btn-primary bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Generate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="geminiResponse" class="container" style="display: none;"></div>
+<div id="generatedText" class="container"></div>
+
+<script>
+    const generateButton = document.getElementById("generateButton");
+    const promptInput = document.getElementById("prompt");
+    const geminiResponse = document.getElementById("geminiResponse");
+    const generatedText = document.getElementById("generatedText");
+
+    generateButton.addEventListener("click", async () => {
+        const inputPrompt = promptInput.value;
+        if (inputPrompt.trim() === "") {
+            alert("Please enter a prompt.");
+            return;
+        }
+
+        geminiResponse.innerHTML = `<h2>Gemini Response: ${inputPrompt}</h2>`;
+        geminiResponse.style.display = "block";
+
+        promptInput.value = "";
+
+
+        const response = await fetch("http://127.0.0.1:8000/streaming_request", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ inputPrompt }),
+        });
+
+        if (!response.ok) {
+            console.error("Error:", response.statusText);
+            generatedText.innerHTML = "Error occurred while generating text.";
+            return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let isFinished = false;
+        let generatedTextContent = "";
+
+        while (!isFinished) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+                isFinished = true;
+                break;
+            }
+
+            const chunkText = decoder.decode(value);
+            generatedTextContent += chunkText;
+            generatedText.innerHTML = marked.parse(generatedTextContent);
+            await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+    });
+</script>
+
+{% endblock %}
