@@ -1,0 +1,160 @@
+{% extends "layouts/masterLayout.njk" %}
+
+{% block content %}
+
+<div class="container my-5">
+    <div class="card">
+        <div class="card-header text-center">
+            <p>
+                <strong>
+                    Custom Needs
+                </strong>
+            </p>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="destination">Destinasi</label>
+                        <input type="text" name="destination" id="destination" class="form-control"
+                            placeholder="Masukkan Nama Kota atau Daerah Distinasi Wisata">
+                    </div>
+                    <div class="form-group">
+                        <label for="pax">Jumlah Wisatawan</label>
+                        <input type="text" name="pax" id="pax" class="form-control"
+                            placeholder="Masukkan Jumlah Wisatawan">
+                    </div>
+                    <div class="form-group">
+                        <label for="currency">Mata Uang</label>
+                        <select class="form-select" id="currency" aria-label="Mata Uang">
+                            <option selected disabled>Pilih Mata Uang</option>
+                            <option value="IDR">Indonesia Rupiah</option>
+                            <option value="USD">US Dollar</option>
+                            <option value="JPY">Japan Yen</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="trip_type">Tipe Liburan</label>
+                        <select class="form-select" id="trip_type" aria-label="Tipe Perjalanan">
+                            <option selected disabled>Pilih Tipe Perjalanan</option>
+                            <option value="agama/spiritual">Agama/Spiritual</option>
+                            <option value="alam">Alam</option>
+                            <option value="belajar/kerja">Belajar/Kerja</option>
+                            <option value="budaya">Budaya</option>
+                            <option value="kehidupan malam">Kehidupan Malam</option>
+                            <option value="keluarga">Keluarga</option>
+                            <option value="kuliner">Kuliner</option>
+                            <option value="pertuangan">Pertualangan</option>
+                            <option value="relaksasi">Relaksasi</option>
+                            <option value="sukarela">Sukarela</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="budget">Budget</label>
+                        <input type="number" class="form-control" id="budget" placeholder="Budget">
+                    </div>
+                    <div class="form-group">
+                        <label for="season">Musim</label>
+                        <select class="form-select" id="season" aria-label="Musim">
+                            <option selected disabled>Pilih Musim</option>
+                            <option value="bulan puasa">Bulan Puasa (Idul Fitri)</option>
+                            <option value="natal">Natal</option>
+                            <option value="tahun baru">Tahun Baru</option>
+                            <option value="libur sekolah">Libur Sekolah</option>
+                            <option value="lebaran">Lebaran</option>
+                            <option value="idul adha">Idul Adha</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Lama Liburan (hari)</label>
+                        <input type="number" class="form-control" id="duration" placeholder="Lama Liburan (hari)">
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <button type="submit" id="generateButton"
+                    class="btn btn-primary bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Generate</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="geminiResponse" class="container" style="display: none;"></div>
+<div id="generatedText" class="container"></div>
+
+<script>
+    const generateButton = document.getElementById("generateButton");
+    const destinationInput = document.getElementById("destination");
+    const paxInput = document.getElementById("pax");
+    const currencySelect = document.getElementById("currency");
+    const budgetInput = document.getElementById("budget");
+    const seasonSelect = document.getElementById("season");
+    const durationInput = document.getElementById("duration");
+    const tripTypeSelect = document.getElementById("trip_type");
+    const geminiResponse = document.getElementById("geminiResponse");
+    const generatedText = document.getElementById("generatedText");
+
+    generateButton.addEventListener("click", async () => {
+        const destination = destinationInput.value;
+        const pax = paxInput.value;
+        const currency = currencySelect.value;
+        const budget = budgetInput.value;
+        const season = seasonSelect.value;
+        const duration = durationInput.value;
+        const tripType = tripTypeSelect.value;
+
+        if (destination.trim() === "" || pax.trim() === "" || currency.trim() === "" || budget.trim() === "" || season.trim() === "" || duration.trim() === "" || tripType.trim() === "") {
+            alert("Please fill in all fields.");
+            return;
+        }
+
+        geminiResponse.innerHTML = `<h2>Gemini Response: Destination - ${destination}, Pax - ${pax}, Currency - ${currency}, Budget - ${budget}, Season - ${season}, Duration - ${duration}, Trip Type - ${tripType}</h2>`;
+        geminiResponse.style.display = "block";
+
+        destinationInput.value = "";
+        paxInput.value = "";
+        currencySelect.selectedIndex = 0;
+        budgetInput.value = "";
+        seasonSelect.selectedIndex = 0;
+        durationInput.value = "";
+        tripTypeSelect.selectedIndex = 0;
+
+        const response = await fetch("http://127.0.0.1:8000/custom_needs", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ destination, pax, currency, budget, season, duration, tripType }),
+        });
+
+        if (!response.ok) {
+            console.error("Error:", response.statusText);
+            generatedText.innerHTML = "Error occurred while generating text.";
+            return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let isFinished = false;
+        let generatedTextContent = "";
+
+        while (!isFinished) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+                isFinished = true;
+                break;
+            }
+
+            const chunkText = decoder.decode(value);
+            generatedTextContent += chunkText;
+            generatedText.innerHTML = marked.parse(generatedTextContent);
+            await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+    });
+</script>
+
+{% endblock %}

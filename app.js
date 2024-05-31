@@ -52,4 +52,23 @@ app.post("/streaming_request", async (req, res) => {
   }
 });
 
+app.get("/custom_needs", (req, res) => {
+  res.render("pages/customNeeds.njk");
+});
+
+app.post("/custom_needs", async (req, res) => {
+  const { destination, pax, currency, budget, season, duration, tripType } = req.body;
+  console.log("==========");
+  console.log(destination);
+  const prompt = `Buatkan sebuah itinerary ke ${destination} untuk jumlah ${pax}
+  orang dalam hitungan mata uang ${currency} dengan maksimal anggaran ${budget} 
+  pada saat musim ${season} untuk durasi ${duration} hari dengan jenis liburan ${tripType}`;
+  const result = await model.generateContentStream(prompt);
+  for await (const chunk of result.stream) {
+    const chunkText = chunk.text();
+    console.log(chunkText);
+    res.write(chunkText);
+  }
+});
+
 module.exports = app;
