@@ -111,7 +111,30 @@
             return;
         }
 
-        geminiResponse.innerHTML = `<h2>Gemini Response: Destination - ${destination}, Pax - ${pax}, Currency - ${currency}, Budget - ${budget}, Season - ${season}, Duration - ${duration}, Trip Type - ${tripType}</h2>`;
+        geminiResponse.innerHTML = `<h2>Gemini Response:</h2>
+        <ul>
+            <li>
+                Destination: ${destination}
+            </li>
+            <li>
+                Pax: ${pax}
+            </li>
+            <li>
+                Currency: ${currency}
+            </li>
+            <li>
+                Budget: ${budget}
+            </li>
+            <li>
+                Season: ${season}
+            </li>
+            <li>
+                Duration: ${duration}
+            </li>
+            <li>
+                Trip Type: ${tripType}
+            </li>
+        </ul>`;
         geminiResponse.style.display = "block";
 
         destinationInput.value = "";
